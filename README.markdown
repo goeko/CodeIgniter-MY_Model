@@ -67,14 +67,19 @@ Model: Blog Example
 		foreach ($this->schema as $key) {
 			$fields[] = $key;
 		}
+		
+//load schema here 
+-------------------
 		$this->loadTable('blog', $fields, 'default');
 		
-		// OR
-		// load this first
+// OR
+// load this first
+------------------
 		/**
 		 * $this->loadTable('blog', 1, 'default');
 		 */
-		// and add this next
+// and add this next
+--------------------
 		/**
 		 * $fields = array('id',
 		 * 'free',
@@ -84,14 +89,29 @@ Model: Blog Example
 		 * 'create_date');
 		 * $this->loadTable('blog', $fields, 'default');
 		 */
+// OR
+-----
+		/**
+		 * $this->loadTable('blog');
+		 */
 		
-		// OR
-		// AUTOLOAD TABLE FIELDS
+// OR
+// AUTOLOAD TABLE FIELDS
+------------------------
 		/**
 		 *
-		 * $this->loadTable('blog', 0, 'default');
+		 * $this->loadTable('blog', NULL, 'default');
 		 *
 		 */
+// OR
+-----
+		/**
+		 * $this->loadTable('blog'); // easy to use
+		 * $this->loadTable('blog', NULL, 'dev');
+		 * $this->loadTable('blog', NULL, 'test');
+		 * $this->loadTable('blog', NULL, 'live'); // nice really
+		 */
+
 	}
 
 Model: add your own function
