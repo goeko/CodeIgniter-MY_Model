@@ -64,8 +64,8 @@ Model: Blog Example
 		            // NEED: auto implemented update_date
 		        );
 
-//load schema here 
--------------------
+		//load schema here 
+
 		foreach ($this->schema as $key) {
 			$fields[] = $key;
 		}
