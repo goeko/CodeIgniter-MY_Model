@@ -199,7 +199,8 @@ class MY_Model extends CI_Model
 	 */
 	public function MY_Model()
 	{
-		parent::CI_Model();
+		// parent::CI_Model();
+		parent::__construct();
 		
 		// Set the debug variable via an external constant
 		if (defined('DEBUG_SCHEMA'))
