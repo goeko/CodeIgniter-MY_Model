@@ -15,6 +15,30 @@
 class MY_Model extends CI_Model
 {
 	/**
+	 * The name of the DataSource connection that this Model uses
+	 *
+	 * @var string
+	 * @access public
+	 */
+	var $useDbConfig = 'default';
+	
+	/**
+	 * Value of the primary key ID of the record that this model is currently pointing to
+	 *
+	 * @var unknown_type
+	 * @access public
+	 */
+	var $id = null;
+		
+	/**
+	 * Container for the data that this model gets from persistent storage (the database).
+	 *
+	 * @var array
+	 * @access public
+	 */
+	var $data = array();
+	
+	/**
 	 * A PHP date formatted string used to send DATETIME values
 	 *
 	 * @var string
@@ -53,6 +77,38 @@ class MY_Model extends CI_Model
 	 * @var boolean
 	 */
 	public $debug = TRUE;
+	
+	/**
+	 * The last inserted ID of the data that this model created
+	 *
+	 * @var int
+	 * @access private
+	 */
+	var $__insertID = null;
+
+	/**
+	 * The number of records returned by the last query
+	 *
+	 * @access private
+	 * @var int
+	 */
+	var $__numRows = null;
+
+	/**
+	 * The number of records affected by the last query
+	 *
+	 * @access private
+	 * @var int
+	 */
+	var $__affectedRows = null;	
+
+	/**
+	 * Tells the model whether to return results in array or not
+	 *
+	 * @var string
+	 * @access public
+	 */
+	var $returnArray = TRUE;
 	
 	/**
 	 * An array of functions to be called before a record is created.
@@ -113,6 +169,29 @@ class MY_Model extends CI_Model
 	public $schema = array();
 
 	/**
+	 * Stores all the queries if debug is TRUE
+	 *
+	 * @var array
+	 * @access public
+	 */
+	var $queries = array();
+
+	/**
+	 * Container for the fields of the table that this model gets from persistent storage (the database).
+	 *
+	 * @var array
+	 * @access public
+	 */
+	var $fields = array();
+	/**
+	 * Used by CI
+	 *
+	 * @var string
+	 * @access private
+	 */
+	var $_parent_name = '';
+
+	/**
 	 * Constructor method. Defines constants.
 	 *
 	 * @access public
@@ -135,8 +214,91 @@ class MY_Model extends CI_Model
 			$this->_define_constants();
 		}
 		
+		// If the magic __get() or __set() methods are used in a Model references can't be used.
+		$this->_assign_libraries( (method_exists($this, '__get') OR method_exists($this, '__set')) ? FALSE : TRUE );
+		
+		// We don't want to assign the model object to itself when using the
+		// assign_libraries function below so we'll grab the name of the model parent
+		$this->_parent_name = ucfirst(get_class($this));
+		
+		log_message('debug', "Model Class Initialized");
+		
+	}
+
+	/**
+	 * Assign Libraries
+	 *
+	 * Creates local references to all currently instantiated objects
+	 * so that any syntax that can be legally used in a controller
+	 * can be used within models.  
+	 *
+	 * @access private
+	 */	
+	function _assign_libraries($use_reference = TRUE)
+	{
+		$CI =& get_instance();				
+		foreach (array_keys(get_object_vars($CI)) as $key)
+		{
+			if ( ! isset($this->$key) AND $key != $this->_parent_name)
+			{			
+				// In some cases using references can cause
+				// problems so we'll conditionally use them
+				if ($use_reference == TRUE)
+				{
+					// Needed to prevent reference errors with some configurations
+					$this->$key = '';
+					$this->$key =& $CI->$key;
+				}
+				else
+				{
+					$this->$key = $CI->$key;
+				}
+			}
+		}		
 	}
 	
+	/**
+	 * Load the associated database table.
+	 *
+	 * @author goeko <goeko@goeko.de>
+	 * @access public
+	 */	
+
+	function loadTable($table, $fields = NULL, $config = 'default')
+	{
+		if ($this->debug) log_message('debug', "Loading model table: $table");
+		$this->table = $table;
+		$this->useDbConfig = $config;	
+		$this->load->database($config);
+
+
+		if($fields == 1){
+			echo "<pre>";
+			// print_r($this->db->list_fields($table));
+			$export_fields´= array();
+			foreach ($this->db->list_fields($table) as $key => $value) {
+				$export_fields[] = $value;
+			}
+			$export_fields = implode("',\n'", $export_fields);
+			echo '$fields = array(\''.$export_fields.'\');';
+			echo "</pre>";
+			exit();
+		}
+		//$this->db->cache_on();
+		// $this->db->table_cache_single($table);
+
+		if(!is_array($fields)){
+			//$this->fields = $this->db->field_names($table); // < 1.7.0
+			$this->fields = $this->db->list_fields($table); // >= 1.7.0
+		} else {
+			$this->fields = $fields;
+		}	
+		if ($this->debug) 
+		{
+			log_message('debug', "Successfull Loaded model table: $table");
+		}
+	}
+
 	/**
 	 * -------------------------------------------------------------------------
 	 * CRUD Funtions
@@ -166,7 +328,6 @@ class MY_Model extends CI_Model
 				return ($return_id) ? $this->db->insert_id() : TRUE;
 			}
 		}
-		
 		return FALSE;
 	}
 	
@@ -1002,5 +1163,309 @@ class MY_Model extends CI_Model
 		
 		return $result;
 	}
+	
+	
+	
+	
+// some crud functionality
+function findAll($conditions = NULL, $fields = '*', $order = NULL, $start = 0, $limit = NULL) 
+{
+	if ($conditions != NULL) 
+	{ 
+		$this->db->where($conditions);
+	}
+
+	if ($fields != NULL) 
+	{ 
+		$this->db->select($fields);
+	}
+	
+	if ($order != NULL) 
+	{ 
+		$this->db->order_by($order);
+	}
+	
+	if ($limit != NULL) 
+	{ 
+		$this->db->limit($limit, $start);
+	}
+	
+	$query = $this->db->get($this->table);
+	$this->__numRows = $query->num_rows();
+	
+	if ($this->debug)
+	{
+		$this->queries[] = $this->db->last_query();
+	}
+	
+	return ($this->returnArray) ? $query->result_array() : $query->result();
+}
+function find($conditions = NULL, $fields = '*', $order = 'id ASC') 
+{
+	$data = $this->findAll($conditions, $fields, $order, 0, 1);
+	
+	if ($data) 
+	{
+		return $data[0];
+	} 
+	else 
+	{
+		return false;
+	}
+}
+function field($conditions = null, $name, $fields = '*', $order = 'id ASC') 
+{
+	$data = $this->findAll($conditions, $fields, $order, 0, 1);
+	
+	if ($data) 
+	{	
+		$row = $data[0];
+		
+		if (isset($row[$name])) 
+		{
+			return $row[$name];
+		} 
+		else 
+		{
+			return false;
+		}	
+	} 
+	else 
+	{	
+		return false;	
+	}
+	
+}
+function findCount($conditions = null) 
+{
+	$data = $this->findAll($conditions, 'COUNT(*) AS count', null, 0, 1);
+	
+	if ($data) 
+	{
+		return $data[0]['count'];
+	} 
+	else 
+	{
+		return false;
+	}
+}
+function generateList($conditions = null, $order = 'id ASC', $start = 0, $limit = NULL, $key = null, $value = null)
+{
+	$data = $this->findAll($conditions, "$key, $value", $order, $start, $limit);
+
+	if ($data) 
+	{
+		foreach ($data as $row) 
+		{
+			$keys[] = ($this->returnArray) ? $row[$key] : $row->$key;
+			$vals[] = ($this->returnArray) ? $row[$value] : $row->$value;
+		}
+			
+		if (!empty($keys) && !empty($vals)) 
+		{
+			$return = array_combine($keys, $vals);
+			return $return;
+		}			
+	} 
+	else 
+	{
+		return false;
+	}
+}
+function generateSingleArray($conditions = null, $field = null, $order = 'id ASC', $start = 0, $limit = NULL) 
+{
+	$data = $this->findAll($conditions, "$field", $order, $start, $limit);
+
+	if ($data) 
+	{	
+		foreach ($data as $row) 
+		{
+			$arr[] = ($this->returnArray) ? $row[$field] : $row->$field;
+		}
+		
+		return $arr;
+	} 
+	else 
+	{
+		return false;
+	}
+}
+// function create() 
+// {
+// 	$this->id = false;
+// 	unset ($this->data);
+// 	
+// 	$this->data = array();
+// 	return true;
+// }	
+function read($id = null, $fields = null) 
+{
+	if ($id != null) 
+	{
+		$this->id = $id;
+	}
+
+	$id = $this->id;
+
+	if ($this->id !== null && $this->id !== false) 
+	{
+		$this->data = $this->find($this->primary_key . ' = ' . $id, $fields);
+		return $this->data;	
+	} 
+	else 
+	{
+		return false;	
+	}
+}
+function insert($data = null) 
+{
+	if ($data == null)
+	{
+		return FALSE;
+	}
+	
+	$this->data = $data;
+	$this->data['create_date'] = date("Y-m-d H:i:s");
+	
+	foreach ($this->data as $key => $value) 
+	{
+		if (array_search($key, $this->fields) === FALSE) 
+		{
+			unset($this->data[$key]);
+		}
+	}
+
+	$this->db->insert($this->table, $this->data); 
+	
+	if ($this->debug)
+	{
+		$this->queries[] = $this->db->last_query();
+	}
+	
+	$this->__insertID = $this->db->insert_id();
+	return $this->__insertID;
+}	
+function save($id = null, $data = null) 
+{
+	if ($data) 
+	{
+		$this->data = $data;
+	}
+			
+	foreach ($this->data as $key => $value) 
+	{
+		if (array_search($key, $this->fields) === FALSE) 
+		{
+			unset($this->data[$key]);
+		}
+	}
+
+	if ($id != null) 
+	{
+		$this->id = $id;
+	}
+
+	$id = $this->id;
+
+	if ($this->id !== null && $this->id !== false) 
+	{	
+		$this->db->where($this->primary_key, $id);
+		$this->db->update($this->table, $this->data);
+		
+		if ($this->debug)
+		{
+			$this->queries[] = $this->db->last_query();
+		}
+		
+		$this->__affectedRows = $this->db->affected_rows(); 
+		return $this->id;			
+	} 
+	else 
+	{
+		$this->db->insert($this->table, $this->data); 
+		
+		if ($this->debug)
+		{
+			$this->queries[] = $this->db->last_query();
+		}
+		
+		$this->__insertID = $this->db->insert_id();
+		return $this->__insertID;
+	}
+}	
+function remove($id = null) 
+{
+	if ($id != null) 
+	{
+		$this->id = $id;
+	}
+
+	$id = $this->id;
+
+	if ($this->id !== null && $this->id !== false) 
+	{	
+		if ($this->db->delete($this->table, array($this->primary_key => $id))) 
+		{
+			$this->id = null;
+			$this->data = array();
+			
+			if ($this->debug)
+			{
+				$this->queries[] = $this->db->last_query();
+			}
+			
+			return true;	
+		} 
+		else 
+		{	
+			return false;	
+		}
+	} 
+	else 
+	{
+		return false; 	
+	}
+}	
+function query($sql) 
+{
+	$ret = $this->db->query($sql);
+	
+	if ($this->debug)
+	{
+		$this->queries[] = $this->db->last_query();
+	}
+	
+	return $ret;
+}
+function lastQuery() 
+{
+	return $this->db->last_query();
+}
+function debugQueries() 
+{
+	$queries = array_reverse($this->queries);
+	return $queries;
+}		
+function insertString($data) 
+{
+	return $this->db->insert_string($this->table, $data);
+}
+function getID() 
+{
+	return $this->id;
+}
+function getInsertID() 
+{
+	return $this->__insertID;
+}
+function getNumRows() 
+{
+	return $this->__numRows;
+}
+function getAffectedRows() 
+{
+	return $this->__affectedRows;
+}
+	
 }
 /* End of file MY_Model.php */
