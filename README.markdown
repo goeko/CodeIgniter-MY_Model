@@ -63,56 +63,29 @@ Model: Blog Example
 		            'create_date'   => array(DATETIME	, NULL	, NN,		$this->now()) // auto implemented
 		            // NEED: auto implemented update_date
 		        );
-		
+
+//load schema here 
+-------------------
 		foreach ($this->schema as $key) {
 			$fields[] = $key;
 		}
-		
-//load schema here 
--------------------
 		$this->loadTable('blog', $fields, 'default');
-		
-// OR
-// load this first
-------------------
-		/**
-		 * $this->loadTable('blog', 1, 'default');
-		 */
-// and add this next
---------------------
-		/**
-		 * $fields = array('id',
-		 * 'free',
-		 * 'title',
-		 * 'contents',
-		 * 'date',
-		 * 'create_date');
-		 * $this->loadTable('blog', $fields, 'default');
-		 */
-// OR
------
+	}
+
+// AUTOLOAD TABLE FIELDS AUTOMATICALLY DEFAULT CONNECTION
+---------------------------------------------------------
 		/**
 		 * $this->loadTable('blog');
 		 */
-		
-// OR
-// AUTOLOAD TABLE FIELDS
-------------------------
-		/**
-		 *
-		 * $this->loadTable('blog', NULL, 'default');
-		 *
-		 */
-// OR
------
+
+// AUTOLOAD TABLES FROM ANOTHER CONNECTIONS
+-------------------------------------------
 		/**
 		 * $this->loadTable('blog'); // easy to use
 		 * $this->loadTable('blog', NULL, 'dev');
 		 * $this->loadTable('blog', NULL, 'test');
 		 * $this->loadTable('blog', NULL, 'live'); // nice really
 		 */
-
-	}
 
 Model: add your own function
 ----------------------------
