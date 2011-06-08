@@ -54,6 +54,16 @@ Model: Blog Example
 		parent::MY_Model();
 		log_message('debug', 'BlogModel Initialized');
 		
+		$this->schema = array( //   < DATATYPE  | LENGTH | FLAGS  | DEFAULT >
+		            'id'            => array(INT        , NULL  , PK+AI+UN, NULL),
+		            'free'          => array(TINYINT	, 1		, NN,		1),
+		            'title'         => array(VARCHAR	, 72	, NN,		NULL),
+		            'contents'      => array(VARCHAR    , 255    , NN,       NULL),
+		            'date'          => array(DATETIME	, NULL	, NN,		$this->now()),
+		            'create_date'          => array(DATETIME	, NULL	, NN,		$this->now()) // auto implemented
+		            // NEED: auto implemented update_date
+		        );
+		
 		foreach ($this->schema as $key) {
 			$fields[] = $key;
 		}
