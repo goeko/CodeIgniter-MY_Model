@@ -60,7 +60,7 @@ Model: Blog Example
 		            'title'         => array(VARCHAR	, 72	, NN,		NULL),
 		            'contents'      => array(VARCHAR    , 255    , NN,       NULL),
 		            'date'          => array(DATETIME	, NULL	, NN,		$this->now()),
-		            'create_date'          => array(DATETIME	, NULL	, NN,		$this->now()) // auto implemented
+		            'create_date'   => array(DATETIME	, NULL	, NN,		$this->now()) // auto implemented
 		            // NEED: auto implemented update_date
 		        );
 		
@@ -80,7 +80,8 @@ Model: Blog Example
 		 * 'free',
 		 * 'title',
 		 * 'contents',
-		 * 'date');
+		 * 'date',
+		 * 'create_date');
 		 * $this->loadTable('blog', $fields, 'default');
 		 */
 		
