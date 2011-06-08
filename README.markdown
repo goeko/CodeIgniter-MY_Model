@@ -72,23 +72,24 @@ Model: Blog Example
 		$this->loadTable('blog', $fields, 'default');
 	}
 
-// AUTOLOAD TABLE FIELDS AUTOMATICALLY DEFAULT CONNECTION
+// Autoload Table Fields Automatically Default Connection
 ---------------------------------------------------------
-		/**
-		 * $this->loadTable('blog');
-		 */
+		
+		$this->loadTable('blog');
+		
 
-// AUTOLOAD TABLES FROM ANOTHER CONNECTIONS
+// Autoload Tables from Another Connections
 -------------------------------------------
-		/**
-		 * $this->loadTable('blog'); // easy to use
-		 * $this->loadTable('blog', NULL, 'dev');
-		 * $this->loadTable('blog', NULL, 'test');
-		 * $this->loadTable('blog', NULL, 'live'); // nice really
-		 */
+		
+		$this->loadTable('blog'); // easy to use
+		$this->loadTable('blog', NULL, 'dev');
+		$this->loadTable('blog', NULL, 'test');
+		$this->loadTable('blog', NULL, 'live'); // nice really
+		
 
 Model: add your own function
 ----------------------------
+
 	function findAllBlog($free, $start = 0, $limit = NULL)
 	{
 		$sql = "SELECT DATE_FORMAT(blog.date, '%d.%m.%Y') AS date,
